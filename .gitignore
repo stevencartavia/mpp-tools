@@ -1,0 +1,45 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# OS/editor files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs and test output
+*.log
+results.json
+coverage/
+
+# Node.js
+node_modules/
+dist/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Rust
+target/
+
+# Go
+*.test
+
+# Conformance build artifacts
+conformance/adapters/go/adapter
+conformance/adapters/go/.gocache/
+conformance/adapters/python/.deps/
+conformance/adapters/rust/target/
+conformance/golden/adapter.mjs
+conformance/adapters/ruby/.bundle/
+conformance/adapters/ruby/vendor/
+conformance/adapters/java/.gradle/
+conformance/adapters/java/build/

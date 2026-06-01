@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "op": "challenge.parse",
+  "input": {
+    "header": "Payment id=\"ch_abc123\", realm=\"api.example.com\", method=\"tempo\", intent=\"charge\", request=\"e30\""
+  },
+  "context": {
+    "vectorName": "www-authenticate",
+    "caseName": "basic_challenge"
+  }
+}

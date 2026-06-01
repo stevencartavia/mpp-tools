@@ -1,0 +1,177 @@
+name: SDK Conformance
+
+on:
+  workflow_call:
+    inputs:
+      adapter:
+        description: SDK adapter to test, for example rust, ruby, go, python, or typescript.
+        required: true
+        type: string
+      conformance-ref:
+        description: mpp-tools branch, tag, or SHA to use for the conformance suite.
+        required: false
+        type: string
+        default: main
+      run-flows:
+        description: Whether to run end-to-end flow tests after vector tests.
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+env:
+  SDK_PATH: ${{ github.workspace }}/sdk
+
+jobs:
+  conformance:
+    name: ${{ inputs.adapter }} conformance
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mpp-tools/conformance
+
+    steps:
+      - name: Checkout SDK
+        uses: actions/checkout@v6
+        with:
+          path: sdk
+
+      - name: Resolve inputs
+        id: resolve
+        working-directory: .
+        env:
+          REQUESTED_ADAPTER: ${{ inputs.adapter }}
+          REQUESTED_CONFORMANCE_REF: ${{ inputs.conformance-ref }}
+        run: |
+          adapter=$(printf '%s' "$REQUESTED_ADAPTER" | tr '[:upper:]' '[:lower:]')
+          case "$adapter" in
+            go|python|ruby|rust|typescript)
+              ;;
+            *)
+              echo "Unsupported adapter: $REQUESTED_ADAPTER" >&2
+              exit 2
+              ;;
+          esac
+
+          echo "adapter=$adapter" >> "$GITHUB_OUTPUT"
+          echo "conformance_ref=$REQUESTED_CONFORMANCE_REF" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout conformance suite
+        uses: actions/checkout@v6
+        with:
+          repository: tempoxyz/mpp-tools
+          ref: ${{ steps.resolve.outputs.conformance_ref }}
+          path: mpp-tools
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: mpp-tools/conformance/requirements.txt
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: mpp-tools/conformance/package-lock.json
+
+      - name: Setup Rust
+        if: steps.resolve.outputs.adapter == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        if: steps.resolve.outputs.adapter == 'rust'
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: mpp-tools/conformance/adapters/rust -> target
+
+      - name: Setup Go
+        if: steps.resolve.outputs.adapter == 'go'
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.0'
+          check-latest: true
+          cache-dependency-path: mpp-tools/conformance/adapters/go/go.sum
+
+      - name: Setup Ruby
+        if: steps.resolve.outputs.adapter == 'ruby'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: false
+          working-directory: mpp-tools/conformance/adapters/ruby
+
+      - name: Install uv
+        if: steps.resolve.outputs.adapter == 'python'
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: latest
+          python-version: '3.12'
+          enable-cache: true
+          cache-dependency-glob: mpp-tools/conformance/adapters/python/uv.lock
+
+      - name: Install conformance runner dependencies
+        run: make install-runner
+
+      - name: Point adapter at SDK checkout
+        run: python3 scripts/use_local_sdk.py --adapter "$ADAPTER" --sdk-path "$SDK_PATH"
+        env:
+          ADAPTER: ${{ steps.resolve.outputs.adapter }}
+
+      - name: Install adapter dependencies
+        run: |
+          case "$ADAPTER" in
+            go)
+              cd adapters/go
+              GOTOOLCHAIN=auto go mod download
+              ;;
+            python)
+              cd adapters/python
+              uv sync --python 3.12
+              ;;
+            ruby)
+              cd adapters/ruby
+              python3 run_adapter.py --build
+              ;;
+            rust)
+              cd adapters/rust
+              cargo fetch
+              ;;
+            typescript)
+              npm install
+              ;;
+            *)
+              echo "Unsupported adapter: $ADAPTER" >&2
+              exit 2
+              ;;
+          esac
+        env:
+          ADAPTER: ${{ steps.resolve.outputs.adapter }}
+
+      - name: Run vector conformance
+        run: python3 scripts/vector_runner.py --adapter "$ADAPTER"
+        env:
+          ADAPTER: ${{ steps.resolve.outputs.adapter }}
+
+      - name: Run flow conformance
+        if: inputs.run-flows
+        run: python3 scripts/flow_runner.py --adapter "$ADAPTER"
+        env:
+          ADAPTER: ${{ steps.resolve.outputs.adapter }}
+
+      - name: Write summary
+        if: always()
+        run: |
+          {
+            echo "### SDK conformance"
+            echo ""
+            echo "- Adapter: \`$ADAPTER\`"
+            echo "- SDK checkout: \`$SDK_PATH\`"
+            echo "- Flow tests: \`${{ inputs.run-flows }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          ADAPTER: ${{ steps.resolve.outputs.adapter }}

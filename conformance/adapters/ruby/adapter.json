@@ -1,0 +1,27 @@
+{
+  "$schema": "../../schemas/adapter-manifest.schema.json",
+  "schema": 1,
+  "name": "ruby",
+  "language": "ruby",
+  "command": [
+    "python3",
+    "run_adapter.py"
+  ],
+  "build": [
+    "python3",
+    "run_adapter.py",
+    "--build"
+  ],
+  "cwd": ".",
+  "capabilities": [
+    "challenge.parse",
+    "challenge.format",
+    "credential.parse",
+    "credential.format",
+    "receipt.parse",
+    "receipt.format",
+    "base64url.encode",
+    "base64url.decode",
+    "challenge.id"
+  ]
+}

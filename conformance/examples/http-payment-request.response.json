@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "value": {
+    "status": 200,
+    "headers": {
+      "payment-receipt": "eyJzdGF0dXMiOiJzdWNjZXNzIn0"
+    },
+    "body": ""
+  }
+}

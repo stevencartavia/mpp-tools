@@ -1,0 +1,268 @@
+#!/usr/bin/env npx tsx
+/**
+ * Golden Adapter CLI for the published TypeScript SDK (mppx on npm)
+ *
+ * This adapter wraps the TypeScript SDK and exposes a consistent CLI interface
+ * for conformance testing. All other SDK adapters must produce identical output.
+ *
+ * Usage:
+ *   echo '<input>' | npx tsx adapter.ts <command>
+ *
+ * Commands:
+ *   parse-www-authenticate   Parse WWW-Authenticate header → JSON challenge
+ *   parse-authorization      Parse Authorization header → JSON credential
+ *   parse-receipt            Parse Payment-Receipt header → JSON receipt
+ *   format-www-authenticate  Format JSON challenge → WWW-Authenticate header
+ *   format-authorization     Format JSON credential → Authorization header
+ *   format-receipt           Format JSON receipt → Payment-Receipt header
+ *   base64url-encode         Encode plain string → base64url
+ *   base64url-decode         Decode base64url → plain string
+ *   generate-challenge-id    Generate HMAC-bound challenge ID from parameters
+ *
+ * Output:
+ *   {"success": true, "result": <value>}
+ *   {"success": false, "error": "<message>", "error_type": "<type>"}
+ */
+
+import { createHmac } from 'node:crypto'
+
+import { Challenge, Credential, Receipt } from 'mppx'
+
+interface SuccessResult<T> {
+	success: true
+	result: T
+}
+
+interface ErrorResult {
+	success: false
+	error: string
+	error_type:
+		| 'parse_error'
+		| 'format_error'
+		| 'encoding_error'
+		| 'generation_error'
+		| 'unsupported_operation'
+		| 'unknown_error'
+}
+
+type Result<T> = SuccessResult<T> | ErrorResult
+type AdapterResponse =
+	| { ok: true; value: unknown }
+	| { ok: false; error: { type: ErrorResult['error_type']; message: string } }
+
+function success<T>(result: T): SuccessResult<T> {
+	return { success: true, result }
+}
+
+function error(message: string, type: ErrorResult['error_type'] = 'unknown_error'): ErrorResult {
+	return { success: false, error: message, error_type: type }
+}
+
+function adapterSuccess(value: unknown): AdapterResponse {
+	return { ok: true, value }
+}
+
+function adapterError(message: string, type: ErrorResult['error_type'] = 'unknown_error'): AdapterResponse {
+	return { ok: false, error: { type, message } }
+}
+
+function readStdin(): Promise<string> {
+	return new Promise((resolve) => {
+		let data = ''
+		process.stdin.setEncoding('utf8')
+		process.stdin.on('data', (chunk) => (data += chunk))
+		process.stdin.on('end', () => resolve(data.trim()))
+	})
+}
+
+function stableStringify(value: unknown): string {
+	if (Array.isArray(value)) {
+		return `[${value.map((item) => stableStringify(item)).join(',')}]`
+	}
+
+	if (value && typeof value === 'object') {
+		const entries = Object.entries(value as Record<string, unknown>).sort(([left], [right]) =>
+			left.localeCompare(right),
+		)
+		return `{${entries
+			.map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`)
+			.join(',')}}`
+	}
+
+	return JSON.stringify(value)
+}
+
+function base64UrlEncode(value: string): string {
+	return Buffer.from(value, 'utf8').toString('base64url')
+}
+
+function base64UrlDecode(value: string): string {
+	return Buffer.from(value, 'base64url').toString('utf8')
+}
+
+function generateConformanceChallengeId(params: {
+	secretKey: string
+	realm?: string
+	method?: string
+	intent?: string
+	request?: Record<string, unknown>
+	expires?: string
+	digest?: string
+	opaque?: string
+}): string {
+	const requestJson = stableStringify(params.request ?? {})
+	const requestB64 = base64UrlEncode(requestJson)
+	const payload = [
+		params.realm ?? '',
+		params.method ?? '',
+		params.intent ?? '',
+		requestB64,
+		params.expires ?? '',
+		params.digest ?? '',
+		params.opaque ?? '',
+	].join('|')
+	return createHmac('sha256', params.secretKey).update(payload).digest('base64url')
+}
+
+function hasDuplicateChallengeParameter(header: string): boolean {
+	const seen = new Set<string>()
+	for (const match of header.matchAll(/(?:^|,\s*)(\w+)=/g)) {
+		const key = match[1]
+		if (seen.has(key)) return true
+		seen.add(key)
+	}
+	return false
+}
+
+function runCommand(command: string, input: string): Result<unknown> {
+	try {
+		switch (command) {
+			case 'parse-www-authenticate': {
+				if (hasDuplicateChallengeParameter(input.replace(/^Payment\s+/, '')))
+					return error('Duplicate challenge parameter', 'parse_error')
+				const challenge = Challenge.deserialize(input)
+				if (!challenge.id) throw new Error('Missing id parameter.')
+				return success(challenge)
+			}
+
+			case 'parse-authorization': {
+				const credential = Credential.deserialize(input)
+				return success(credential)
+			}
+
+			case 'parse-receipt': {
+				const receipt = Receipt.deserialize(input)
+				return success(receipt)
+			}
+
+			case 'format-www-authenticate': {
+				const challengeData = JSON.parse(input)
+				const challenge = Challenge.from(challengeData)
+				const header = Challenge.serialize(challenge)
+				return success(header)
+			}
+
+			case 'format-authorization': {
+				const credentialData = JSON.parse(input)
+				const credential = Credential.from(credentialData)
+				const header = Credential.serialize(credential)
+				return success(header)
+			}
+
+			case 'format-receipt': {
+				const receiptData = JSON.parse(input)
+				const receipt = Receipt.from(receiptData)
+				const header = Receipt.serialize(receipt)
+				return success(header)
+			}
+
+			case 'base64url-encode': {
+				const encoded = base64UrlEncode(input)
+				return success(encoded)
+			}
+
+			case 'base64url-decode': {
+				const decoded = base64UrlDecode(input)
+				return success(decoded)
+			}
+
+			case 'generate-challenge-id': {
+				const params = JSON.parse(input)
+				return success(generateConformanceChallengeId(params))
+			}
+
+			default:
+				return error(`Unknown command: ${command}`, 'unknown_error')
+		}
+	} catch (err) {
+		const message = err instanceof Error ? err.message : String(err)
+
+		if (command.startsWith('parse-')) {
+			return error(message, 'parse_error')
+		} else if (command.startsWith('format-')) {
+			return error(message, 'format_error')
+		} else if (command.startsWith('base64url-')) {
+			return error(message, 'encoding_error')
+		} else if (command.startsWith('generate-')) {
+			return error(message, 'generation_error')
+		} else {
+			return error(message, 'unknown_error')
+		}
+	}
+}
+
+const OP_TO_COMMAND: Record<string, string> = {
+	'challenge.parse': 'parse-www-authenticate',
+	'challenge.format': 'format-www-authenticate',
+	'credential.parse': 'parse-authorization',
+	'credential.format': 'format-authorization',
+	'receipt.parse': 'parse-receipt',
+	'receipt.format': 'format-receipt',
+	'base64url.encode': 'base64url-encode',
+	'base64url.decode': 'base64url-decode',
+	'challenge.id': 'generate-challenge-id',
+}
+
+function commandInputForRequest(op: string, input: unknown): string {
+	if (op.endsWith('.parse')) return (input as { header: string }).header
+	if (op.startsWith('base64url.')) return (input as { text: string }).text
+	return JSON.stringify(input)
+}
+
+function responseValueForOperation(op: string, result: unknown): unknown {
+	if (op.endsWith('.format')) return { header: result }
+	if (op.startsWith('base64url.')) return { text: result }
+	if (op === 'challenge.id') return { id: result }
+	return result
+}
+
+function runAdapterRequest(request: { op: string; input: unknown }): AdapterResponse {
+	if (request.op === 'http.payment_request') {
+		return adapterError('http.payment_request is not implemented by this adapter yet', 'unsupported_operation')
+	}
+	const command = OP_TO_COMMAND[request.op]
+	if (!command) return adapterError(`Unknown operation: ${request.op}`, 'unsupported_operation')
+	const result = runCommand(command, commandInputForRequest(request.op, request.input))
+	if (!result.success) return adapterError(result.error, result.error_type)
+	return adapterSuccess(responseValueForOperation(request.op, result.result))
+}
+
+async function main(): Promise<void> {
+	const command = process.argv[2]
+
+	if (!command) {
+		const stdin = await readStdin()
+		const request = JSON.parse(stdin)
+		console.log(JSON.stringify(runAdapterRequest(request)))
+		return
+	}
+
+	const stdin = await readStdin()
+	const result = runCommand(command, stdin)
+	console.log(JSON.stringify(result))
+}
+
+main().catch((err) => {
+	console.log(JSON.stringify(error(err.message, 'unknown_error')))
+	process.exit(1)
+})

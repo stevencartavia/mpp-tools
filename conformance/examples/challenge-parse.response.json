@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "value": {
+    "id": "ch_abc123",
+    "realm": "api.example.com",
+    "method": "tempo",
+    "intent": "charge",
+    "request": {}
+  }
+}

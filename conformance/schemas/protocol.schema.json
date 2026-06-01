@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tempo.xyz/mpp-tools/conformance/schemas/protocol.schema.json",
+  "title": "MPP Conformance Protocol Values",
+  "$defs": {
+    "Operation": {
+      "type": "string",
+      "enum": [
+        "challenge.parse",
+        "challenge.format",
+        "credential.parse",
+        "credential.format",
+        "receipt.parse",
+        "receipt.format",
+        "base64url.encode",
+        "base64url.decode",
+        "challenge.id",
+        "http.payment_request"
+      ]
+    },
+    "ErrorType": {
+      "type": "string",
+      "enum": [
+        "parse_error",
+        "format_error",
+        "encoding_error",
+        "generation_error",
+        "http_error",
+        "unsupported_operation",
+        "unknown_error"
+      ]
+    },
+    "JsonObject": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "Challenge": {
+      "type": "object",
+      "required": ["id", "realm", "method", "intent", "request"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "realm": { "type": "string" },
+        "method": { "type": "string", "minLength": 1 },
+        "intent": { "type": "string", "minLength": 1 },
+        "request": { "$ref": "#/$defs/JsonObject" },
+        "expires": { "type": "string", "format": "date-time" },
+        "description": { "type": "string" },
+        "digest": { "type": "string" },
+        "opaque": { "type": "string" }
+      }
+    },
+    "Credential": {
+      "type": "object",
+      "required": ["challenge", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "challenge": { "$ref": "#/$defs/Challenge" },
+        "payload": { "$ref": "#/$defs/JsonObject" },
+        "source": {
+          "anyOf": [
+            { "$ref": "#/$defs/JsonObject" },
+            { "type": "string" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "Receipt": {
+      "type": "object",
+      "required": ["status", "timestamp", "reference"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "type": "string", "minLength": 1 },
+        "method": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "reference": { "type": "string", "minLength": 1 },
+        "externalId": { "type": "string" },
+        "extra": { "$ref": "#/$defs/JsonObject" }
+      }
+    },
+    "HeaderInput": {
+      "type": "object",
+      "required": ["header"],
+      "additionalProperties": false,
+      "properties": {
+        "header": { "type": "string" }
+      }
+    },
+    "HeaderOutput": {
+      "type": "object",
+      "required": ["header"],
+      "additionalProperties": false,
+      "properties": {
+        "header": { "type": "string" }
+      }
+    },
+    "TextValue": {
+      "type": "object",
+      "required": ["text"],
+      "additionalProperties": false,
+      "properties": {
+        "text": { "type": "string" }
+      }
+    },
+    "ChallengeIdInput": {
+      "type": "object",
+      "required": ["secretKey", "realm", "method", "intent", "request"],
+      "additionalProperties": false,
+      "properties": {
+        "secretKey": { "type": "string", "minLength": 1 },
+        "realm": { "type": "string" },
+        "method": { "type": "string" },
+        "intent": { "type": "string" },
+        "request": { "$ref": "#/$defs/JsonObject" },
+        "expires": { "type": "string" },
+        "description": { "type": "string" },
+        "digest": { "type": "string" },
+        "opaque": { "type": "string" }
+      }
+    },
+    "ChallengeIdOutput": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "HttpPaymentMode": {
+      "type": "string",
+      "enum": [
+        "payment",
+        "plain",
+        "invalid_payload",
+        "mismatched_request",
+        "invalid_challenge_id"
+      ]
+    },
+    "HttpPaymentRequest": {
+      "type": "object",
+      "required": ["url", "method", "headers", "body", "payment", "mode"],
+      "additionalProperties": false,
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] },
+        "headers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "body": {
+          "anyOf": [
+            { "type": "string" },
+            { "type": "null" }
+          ]
+        },
+        "payment": {
+          "type": "object",
+          "required": ["payload"],
+          "additionalProperties": false,
+          "properties": {
+            "payload": { "$ref": "#/$defs/JsonObject" },
+            "source": {
+              "anyOf": [
+                { "$ref": "#/$defs/JsonObject" },
+                { "type": "string" },
+                { "type": "null" }
+              ]
+            }
+          }
+        },
+        "mode": { "$ref": "#/$defs/HttpPaymentMode" }
+      }
+    },
+    "HttpResponse": {
+      "type": "object",
+      "required": ["status", "headers", "body"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "type": "integer", "minimum": 100, "maximum": 599 },
+        "headers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "body": { "type": "string" }
+      }
+    }
+  }
+}

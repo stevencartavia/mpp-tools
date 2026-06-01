@@ -1,0 +1,30 @@
+{
+  "name": "@tempo/mpp-conformance",
+  "version": "0.0.1",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test:golden": "tsx golden/adapter.ts",
+    "test:all": "python3 scripts/vector_runner.py",
+    "flow": "python3 scripts/flow_runner.py",
+    "test:go": "python3 scripts/vector_runner.py --adapter go",
+    "test:ruby": "python3 scripts/vector_runner.py --adapter ruby",
+    "build:go": "make install-go",
+    "build:rust": "cd adapters/rust && cargo build --locked --release",
+    "build:python": "make install-python",
+    "build:ruby": "make install-ruby",
+    "build:all": "make install"
+  },
+  "dependencies": {
+    "mppx": "0.6.28"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

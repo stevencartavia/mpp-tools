@@ -1,0 +1,86 @@
+{
+  "$schema": "./schemas/operation-registry.schema.json",
+  "schema": 1,
+  "operations": {
+    "challenge.parse": {
+      "category": "vector",
+      "inputRef": "protocol.schema.json#/$defs/HeaderInput",
+      "successRef": "protocol.schema.json#/$defs/Challenge",
+      "errorTypes": ["parse_error"],
+      "comparison": "semantic",
+      "description": "Parse a WWW-Authenticate Payment challenge header into a canonical challenge object."
+    },
+    "challenge.format": {
+      "category": "vector",
+      "inputRef": "protocol.schema.json#/$defs/Challenge",
+      "successRef": "protocol.schema.json#/$defs/HeaderOutput",
+      "errorTypes": ["format_error"],
+      "comparison": "semantic",
+      "description": "Format a canonical challenge object as a WWW-Authenticate Payment header."
+    },
+    "credential.parse": {
+      "category": "vector",
+      "inputRef": "protocol.schema.json#/$defs/HeaderInput",
+      "successRef": "protocol.schema.json#/$defs/Credential",
+      "errorTypes": ["parse_error"],
+      "comparison": "semantic",
+      "description": "Parse an Authorization Payment credential header into a canonical credential object."
+    },
+    "credential.format": {
+      "category": "vector",
+      "inputRef": "protocol.schema.json#/$defs/Credential",
+      "successRef": "protocol.schema.json#/$defs/HeaderOutput",
+      "errorTypes": ["format_error"],
+      "comparison": "semantic",
+      "description": "Format a canonical credential object as an Authorization Payment header."
+    },
+    "receipt.parse": {
+      "category": "vector",
+      "inputRef": "protocol.schema.json#/$defs/HeaderInput",
+      "successRef": "protocol.schema.json#/$defs/Receipt",
+      "errorTypes": ["parse_error"],
+      "comparison": "semantic",
+      "description": "Parse a Payment-Receipt header into a canonical receipt object."
+    },
+    "receipt.format": {
+      "category": "vector",
+      "inputRef": "protocol.schema.json#/$defs/Receipt",
+      "successRef": "protocol.schema.json#/$defs/HeaderOutput",
+      "errorTypes": ["format_error"],
+      "comparison": "semantic",
+      "description": "Format a canonical receipt object as a Payment-Receipt header value."
+    },
+    "base64url.encode": {
+      "category": "vector",
+      "inputRef": "protocol.schema.json#/$defs/TextValue",
+      "successRef": "protocol.schema.json#/$defs/TextValue",
+      "errorTypes": ["encoding_error"],
+      "comparison": "exact",
+      "description": "Encode UTF-8 text as unpadded RFC4648 base64url text."
+    },
+    "base64url.decode": {
+      "category": "vector",
+      "inputRef": "protocol.schema.json#/$defs/TextValue",
+      "successRef": "protocol.schema.json#/$defs/TextValue",
+      "errorTypes": ["encoding_error"],
+      "comparison": "exact",
+      "description": "Decode unpadded RFC4648 base64url text into UTF-8 text."
+    },
+    "challenge.id": {
+      "category": "vector",
+      "inputRef": "protocol.schema.json#/$defs/ChallengeIdInput",
+      "successRef": "protocol.schema.json#/$defs/ChallengeIdOutput",
+      "errorTypes": ["generation_error"],
+      "comparison": "exact",
+      "description": "Generate a deterministic challenge id from canonical challenge id parameters."
+    },
+    "http.payment_request": {
+      "category": "flow",
+      "inputRef": "protocol.schema.json#/$defs/HttpPaymentRequest",
+      "successRef": "protocol.schema.json#/$defs/HttpResponse",
+      "errorTypes": ["http_error"],
+      "comparison": "http",
+      "description": "Send one normalized HTTP request through the SDK payment-aware transport."
+    }
+  }
+}

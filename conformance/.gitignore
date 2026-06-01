@@ -1,0 +1,11 @@
+node_modules/
+adapters/go/adapter
+adapters/go/.gocache/
+adapters/python/.deps/
+adapters/rust/target/
+flows/golden-results.json
+!flows/golden-results.json
+results.json
+golden/adapter.mjs
+adapters/ruby/.bundle/
+adapters/ruby/vendor/

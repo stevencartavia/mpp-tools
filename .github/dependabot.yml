@@ -1,0 +1,65 @@
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/conformance"
+    schedule:
+      interval: "daily"
+    groups:
+      npm-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "cargo"
+    directory: "/conformance/adapters/rust"
+    schedule:
+      interval: "daily"
+    groups:
+      rust-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "uv"
+    directory: "/conformance/adapters/python"
+    schedule:
+      interval: "daily"
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "gomod"
+    directory: "/conformance/adapters/go"
+    schedule:
+      interval: "daily"
+    groups:
+      go-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "bundler"
+    directory: "/conformance/adapters/ruby"
+    schedule:
+      interval: "daily"
+    groups:
+      ruby-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "gradle"
+    directory: "/conformance/adapters/java"
+    schedule:
+      interval: "daily"
+    groups:
+      java-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    groups:
+      github-actions:
+        patterns:
+          - "*"

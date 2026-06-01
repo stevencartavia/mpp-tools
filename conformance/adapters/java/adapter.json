@@ -1,0 +1,26 @@
+{
+  "$schema": "../../schemas/adapter-manifest.schema.json",
+  "schema": 1,
+  "name": "java",
+  "language": "java",
+  "command": [
+    "./build/install/mpp-java-adapter/bin/mpp-java-adapter"
+  ],
+  "build": [
+    "./gradlew",
+    "--no-daemon",
+    "installDist"
+  ],
+  "cwd": ".",
+  "capabilities": [
+    "challenge.parse",
+    "challenge.format",
+    "credential.parse",
+    "credential.format",
+    "receipt.parse",
+    "receipt.format",
+    "base64url.encode",
+    "base64url.decode",
+    "challenge.id"
+  ]
+}

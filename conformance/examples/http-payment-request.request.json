@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "op": "http.payment_request",
+  "input": {
+    "url": "http://127.0.0.1:43999/charge/success",
+    "method": "GET",
+    "headers": {},
+    "body": null,
+    "payment": {
+      "payload": {
+        "type": "transaction",
+        "signature": "0xabc123"
+      },
+      "source": null
+    },
+    "mode": "payment"
+  },
+  "context": {
+    "caseName": "success_charge",
+    "timeoutMs": 30000
+  }
+}
