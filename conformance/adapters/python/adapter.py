@@ -365,8 +365,6 @@ def main():
             error_type = "encoding_error"
         elif command.startswith("generate-"):
             error_type = "generation_error"
-        elif command.startswith("verify-tempo-receipt"):
-            error_type = "verification_error"
         else:
             error_type = "unknown_error"
         print(json.dumps(error(str(e), error_type)))
