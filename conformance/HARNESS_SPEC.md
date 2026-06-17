@@ -175,6 +175,7 @@ Required for vector conformance:
 | `base64url.encode` | `{ "text": string }` | `{ "text": string }` |
 | `base64url.decode` | `{ "text": string }` | `{ "text": string }` |
 | `challenge.id` | challenge id params | `{ "id": string }` |
+| `tempo.fee_payer.cosign` | fee-payer transaction params plus sponsor config | cosigned transaction summary |
 | `tempo.receipt.verify` | Tempo credential plus receipt fixture | `{ "status": "success", "reference": string }` |
 | `stripe.external_id_binding` | Stripe request, credential payload, and PaymentIntent fixture | verification outcome |
 
