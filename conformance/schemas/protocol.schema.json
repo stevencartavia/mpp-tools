@@ -15,8 +15,9 @@
         "base64url.encode",
         "base64url.decode",
         "challenge.id",
-        "stripe.external_id_binding",
-        "http.payment_request"
+        "tempo.receipt.verify",
+        "http.payment_request",
+        "stripe.external_id_binding"
       ]
     },
     "ErrorType": {
@@ -226,6 +227,24 @@
           "additionalProperties": { "type": "string" }
         },
         "body": { "type": "string" }
+      }
+    },
+    "TempoReceiptVerificationInput": {
+      "type": "object",
+      "required": ["credential", "receipt"],
+      "additionalProperties": false,
+      "properties": {
+        "credential": { "$ref": "#/$defs/Credential" },
+        "receipt": { "$ref": "#/$defs/JsonObject" }
+      }
+    },
+    "TempoReceiptVerificationOutput": {
+      "type": "object",
+      "required": ["status", "reference"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "type": "string", "const": "success" },
+        "reference": { "type": "string", "minLength": 1 }
       }
     }
   }

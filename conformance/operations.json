@@ -89,6 +89,14 @@
       "errorTypes": ["http_error"],
       "comparison": "http",
       "description": "Send one normalized HTTP request through the SDK payment-aware transport."
+    },
+    "tempo.receipt.verify": {
+      "category": "vector",
+      "inputRef": "protocol.schema.json#/$defs/TempoReceiptVerificationInput",
+      "successRef": "protocol.schema.json#/$defs/TempoReceiptVerificationOutput",
+      "errorTypes": ["verification_error"],
+      "comparison": "exact",
+      "description": "Verify a Tempo credential against a supplied receipt fixture. This is an optional staged capability until full signed transaction verification vectors are available."
     }
   }
 }
