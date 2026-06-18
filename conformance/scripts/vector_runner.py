@@ -551,14 +551,19 @@ class VectorRunner:
                 )
 
             # Format test
-            if tests.get("format") is True and format_cmd and obj is not None:
+            format_test = tests.get("format")
+            if format_test is not None and format_cmd and obj is not None:
                 if is_base64url:
                     format_input = obj
                 else:
                     format_input = json.dumps(obj)
                 result, elapsed_ms = self.run_adapter_timed(adapter, format_cmd, format_input, timeout=command_timeout)
-                expected_format = {"success": True, "result": wire}
-                passed, error = self.compare_format_results_semantic(adapter, expected_format, result, format_cmd, parse_cmd)
+                if format_test is True:
+                    expected_format = {"success": True, "result": wire}
+                    passed, error = self.compare_format_results_semantic(adapter, expected_format, result, format_cmd, parse_cmd)
+                else:
+                    expected_format = format_test
+                    passed, error = self.compare_results(expected_format, result)
                 if passed:
                     passed, error = self.compare_duration(duration_limit_ms, elapsed_ms)
                 self._record_result(
