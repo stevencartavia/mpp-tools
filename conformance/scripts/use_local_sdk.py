@@ -64,8 +64,8 @@ def configure_python(conformance_dir: Path, sdk_path: Path) -> None:
     pyproject = conformance_dir / "adapters" / "python" / "pyproject.toml"
     replace_one(
         pyproject,
-        r'^(\s*)"pympp[^"]*",\s*$',
-        rf'\1"pympp @ {sdk_path.as_uri()}",',
+        r'^(\s*)"pympp(\[[^\]]*\])?[^"]*",\s*$',
+        rf'\1"pympp\2 @ {sdk_path.as_uri()}",',
         "Python pympp dependency",
     )
 
